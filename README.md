@@ -1,4 +1,9 @@
 # Object Pooling for Unity
+##Difference in this fork
+
+You can set max capacity to a pool. When max capacity reached with all instances active, when you reuse the prefab, it reuses the oldest active instance in the scene with the help of a Queue.
+
+To set max capacity, you need to install the pool via Pool Installer
 
 ### TODO
 - [x] Rename API to make it more clarifying
