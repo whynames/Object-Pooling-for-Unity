@@ -7,8 +7,11 @@ You can set max capacity to a pool. When max capacity reached with all instances
 To set max capacity, you need to install the pool via Pool Installer
 
 <img width="344" alt="Screenshot 2023-09-19 at 18 49 37" src="https://github.com/whynames/Object-Pooling-for-Unity/assets/73838734/071661af-f86c-46b5-9f06-88d3e9481afc">
-<img width="345" alt="Screenshot 2023-09-19 at 18 49 12" src="https://github.com/whynames/Object-Pooling-for-Unity/assets/73838734/95c1ec9d-1f8b-4d4a-97a0-6073535fdef6">
 <img width="345" alt="Screenshot 2023-09-19 at 18 49 26" src="https://github.com/whynames/Object-Pooling-for-Unity/assets/73838734/776bc999-32e9-467c-aeb3-b1e489bd62e5">
+<img width="345" alt="Screenshot 2023-09-19 at 18 49 12" src="https://github.com/whynames/Object-Pooling-for-Unity/assets/73838734/95c1ec9d-1f8b-4d4a-97a0-6073535fdef6">
+
+- I left some test code inside for future tests and clean ups
+- If you don't have odin inspector, just delete warning lines, they don't affect the functionality, just for the inspector.
 
 ### TODO
 - [x] Rename API to make it more clarifying
