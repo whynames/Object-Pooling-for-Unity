@@ -8,21 +8,27 @@ namespace ToolBox.Pools
         private GameObject _source;
         private Poolable _prototype;
         private Stack<Poolable> _instances;
+        private Queue<Poolable> _activeInstances;
+
         private List<GameObject> _allInstances;
         private readonly Quaternion _rotation;
         private readonly Vector3 _scale;
         private readonly bool _prototypeIsNotSource;
+
+        bool isMaxCapacity;
+        int maxCapacity = 3;
 
         private static readonly Dictionary<GameObject, Pool> _prefabLookup = new Dictionary<GameObject, Pool>(64);
         private static readonly Dictionary<GameObject, Pool> _instanceLookup = new Dictionary<GameObject, Pool>(512);
 
         private const int InitialSize = 128;
 
-        public Pool(GameObject prefab)
+        public Pool(GameObject prefab, bool isMaxCapacity = false, int maxCapacity = 5)
         {
             _source = prefab;
             _prototype = prefab.GetComponent<Poolable>();
-
+            this.isMaxCapacity = isMaxCapacity;
+            this.maxCapacity = maxCapacity;
             if (_prototype == null)
             {
                 _prototype = Object.Instantiate(prefab).AddComponent<Poolable>();
@@ -30,8 +36,9 @@ namespace ToolBox.Pools
                 _prototype.gameObject.SetActive(false);
                 _prototypeIsNotSource = true;
             }
-            
+
             _instances = new Stack<Poolable>(InitialSize);
+            _activeInstances = new Queue<Poolable>(InitialSize);
             _allInstances = new List<GameObject>(InitialSize);
             _prefabLookup.Add(_source, this);
 
@@ -47,6 +54,23 @@ namespace ToolBox.Pools
             if (!hasPool && create)
                 pool = new Pool(prefab);
 
+            return pool;
+        }
+        public static Pool CreatePoolByPrefab(GameObject prefab, int maxCapacity, bool isMaxCapacity, bool create = true)
+        {
+            var hasPool = _prefabLookup.TryGetValue(prefab, out var pool);
+
+            if (!hasPool && create)
+            {
+                if (isMaxCapacity)
+                {
+                    pool = new Pool(prefab, isMaxCapacity, maxCapacity);
+                }
+                else
+                {
+                    pool = new Pool(prefab);
+                }
+            }
             return pool;
         }
 
@@ -73,20 +97,20 @@ namespace ToolBox.Pools
         public void Clear(bool destroyActive)
         {
             _prefabLookup.Remove(_source);
-            
+
             foreach (var instance in _allInstances)
             {
                 if (instance == null)
                     continue;
 
                 _instanceLookup.Remove(instance);
-                
+
                 if (!destroyActive && instance.activeInHierarchy)
                     continue;
-                
+
                 Object.Destroy(instance);
             }
-            
+
             if (_prototypeIsNotSource)
                 Object.Destroy(_prototype.gameObject);
 
@@ -176,7 +200,7 @@ namespace ToolBox.Pools
                         {
                             instance.OnReuse();
                             instance.gameObject.SetActive(true);
-
+                            _activeInstances.Enqueue(instance);
                             return instance;
                         }
 
@@ -185,20 +209,27 @@ namespace ToolBox.Pools
 
                     instance = CreateInstance();
                     instance.gameObject.SetActive(true);
-
+                    _activeInstances.Enqueue(instance);
                     return instance;
                 }
 
                 instance.OnReuse();
                 instance.gameObject.SetActive(true);
-
+                _activeInstances.Enqueue(instance);
                 return instance;
             }
             else
             {
-                var instance = CreateInstance();
+                Poolable instance;
+                if (isMaxCapacity && _allInstances.Count > maxCapacity)
+                {
+                    instance = _activeInstances.Dequeue();
+                    _activeInstances.Enqueue(instance);
+                    return instance;
+                }
+                instance = CreateInstance();
                 instance.gameObject.SetActive(true);
-
+                _activeInstances.Enqueue(instance);
                 return instance;
             }
         }
@@ -207,7 +238,7 @@ namespace ToolBox.Pools
         {
             var instance = Object.Instantiate(_prototype);
             var instanceGameObject = instance.gameObject;
-            
+
             _instanceLookup.Add(instanceGameObject, this);
             _allInstances.Add(instanceGameObject);
 
